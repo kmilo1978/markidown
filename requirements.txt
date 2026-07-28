@@ -1,0 +1,2 @@
+flask==3.1.1
+markitdown[all]==0.1.1
