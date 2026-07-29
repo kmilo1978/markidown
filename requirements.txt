@@ -1,2 +1,12 @@
 flask==3.1.1
-markitdown[all]==0.1.1
+markitdown==0.1.1
+pdfminer-six
+python-pptx
+openpyxl
+pandas
+mammoth
+markdownify
+beautifulsoup4
+xlrd
+olefile
+charset-normalizer
