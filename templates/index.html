@@ -5,248 +5,121 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MarkItDown - Convertidor a Markdown</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #0f0f0f;
-            color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 2rem;
-        }
-
-        h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-            color: #ffffff;
-        }
-
-        .subtitle {
-            color: #888;
-            margin-bottom: 2rem;
-            font-size: 0.95rem;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-        }
-
-        .upload-area {
-            border: 2px dashed #333;
-            border-radius: 12px;
-            padding: 3rem 2rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: #1a1a1a;
-        }
-
-        .upload-area:hover,
-        .upload-area.dragover {
-            border-color: #4a9eff;
-            background: #1a2a3a;
-        }
-
-        .upload-area p {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-area .hint {
-            font-size: 0.85rem;
-            color: #666;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        #fileInput {
-            display: none;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .loading.active {
-            display: block;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #333;
-            border-top-color: #4a9eff;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin: 0 auto 1rem;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .result {
-            display: none;
-            margin-top: 2rem;
-        }
-
-        .result.active {
-            display: block;
-        }
-
-        .result-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .result-header h2 {
-            font-size: 1.2rem;
-            color: #fff;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 0.5rem 1rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            font-weight: 500;
-            transition: background 0.2s;
-        }
-
-        .btn-copy {
-            background: #2a2a2a;
-            color: #e0e0e0;
-            border: 1px solid #444;
-        }
-
-        .btn-copy:hover {
-            background: #3a3a3a;
-        }
-
-        .btn-download {
-            background: #4a9eff;
-            color: #fff;
-        }
-
-        .btn-download:hover {
-            background: #3a8eef;
-        }
-
-        .btn-url {
-            background: #2a2a2a;
-            color: #e0e0e0;
-            border: 1px solid #444;
-        }
-
-        .btn-url:hover {
-            background: #3a3a3a;
-        }
-
-        .btn-obsidian {
-            background: #7c3aed;
-            color: #fff;
-        }
-
-        .btn-obsidian:hover {
-            background: #6d28d9;
-        }
-
-        .markdown-output {
-            background: #1a1a1a;
-            border: 1px solid #333;
-            border-radius: 8px;
-            padding: 1.5rem;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 0.85rem;
-            line-height: 1.6;
-            max-height: 600px;
-            overflow-y: auto;
-            color: #d4d4d4;
-        }
-
-        .error {
-            background: #2a1515;
-            border: 1px solid #5a2020;
-            color: #ff6b6b;
-            padding: 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .error.active {
-            display: block;
-        }
-
-        .file-info {
-            background: #1a2a1a;
-            border: 1px solid #2a4a2a;
-            color: #6bff6b;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-top: 1rem;
-            font-size: 0.85rem;
-            display: none;
-        }
-
-        .file-info.active {
-            display: block;
-        }
-
-        footer {
-            margin-top: 3rem;
-            color: #555;
-            font-size: 0.8rem;
-        }
-
-        footer a {
-            color: #4a9eff;
-            text-decoration: none;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 2rem; }
+        h1 { font-size: 2rem; margin-bottom: 0.5rem; color: #ffffff; }
+        .subtitle { color: #888; margin-bottom: 2rem; font-size: 0.95rem; }
+        .container { width: 100%; max-width: 900px; }
+        .upload-area { border: 2px dashed #333; border-radius: 12px; padding: 3rem 2rem; text-align: center; cursor: pointer; transition: all 0.3s ease; background: #1a1a1a; }
+        .upload-area:hover, .upload-area.dragover { border-color: #4a9eff; background: #1a2a3a; }
+        .upload-area p { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .upload-area .hint { font-size: 0.85rem; color: #666; }
+        .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+        #fileInput { display: none; }
+        .url-section { margin-top: 1.5rem; text-align: center; }
+        .section-divider { color: #555; font-size: 0.85rem; margin-bottom: 1rem; }
+        .url-input-group { display: flex; gap: 0.5rem; }
+        .url-input { flex: 1; padding: 0.75rem 1rem; border: 1px solid #333; border-radius: 8px; background: #1a1a1a; color: #e0e0e0; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
+        .url-input:focus { border-color: #4a9eff; }
+        .url-input::placeholder { color: #555; }
+        .btn-url-convert { padding: 0.75rem 1.5rem; background: #4a9eff; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; white-space: nowrap; transition: background 0.2s; }
+        .btn-url-convert:hover { background: #3a8eef; }
+        .sitemap-section { margin-top: 1.5rem; background: #1a1a2a; border: 1px solid #2a2a4a; border-radius: 12px; padding: 1.5rem; }
+        .sitemap-section h3 { font-size: 1rem; color: #a0a0ff; margin-bottom: 0.5rem; }
+        .sitemap-section .hint { font-size: 0.8rem; color: #666; margin-bottom: 1rem; }
+        .sitemap-input-group { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .sitemap-options { display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: #888; }
+        .sitemap-options label { display: flex; align-items: center; gap: 0.3rem; }
+        .sitemap-options input[type="number"] { width: 60px; padding: 0.3rem 0.5rem; border: 1px solid #333; border-radius: 4px; background: #1a1a1a; color: #e0e0e0; font-size: 0.85rem; }
+        .btn-sitemap { padding: 0.75rem 1.5rem; background: #6366f1; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 500; white-space: nowrap; transition: background 0.2s; }
+        .btn-sitemap:hover { background: #4f46e5; }
+        .progress-bar { display: none; margin-top: 1rem; background: #2a2a2a; border-radius: 8px; overflow: hidden; height: 24px; position: relative; }
+        .progress-bar.active { display: block; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, #4a9eff, #6366f1); transition: width 0.3s; width: 0%; }
+        .progress-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 0.75rem; font-weight: 500; }
+        .bulk-results { display: none; margin-top: 2rem; }
+        .bulk-results.active { display: block; }
+        .bulk-results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .bulk-results-header h2 { font-size: 1.2rem; color: #fff; }
+        .bulk-item { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; }
+        .bulk-item-header { padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: background 0.2s; }
+        .bulk-item-header:hover { background: #222; }
+        .bulk-item-title { font-size: 0.85rem; color: #4a9eff; word-break: break-all; }
+        .bulk-item-actions { display: flex; gap: 0.3rem; }
+        .bulk-item-content { display: none; padding: 1rem; border-top: 1px solid #333; max-height: 300px; overflow-y: auto; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #d4d4d4; }
+        .bulk-item-content.active { display: block; }
+        .btn-sm { padding: 0.3rem 0.6rem; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        .btn-sm-obsidian { background: #7c3aed; color: #fff; }
+        .btn-sm-download { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; }
+        .loading { display: none; text-align: center; padding: 2rem; }
+        .loading.active { display: block; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #333; border-top-color: #4a9eff; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .result { display: none; margin-top: 2rem; }
+        .result.active { display: block; }
+        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+        .result-header h2 { font-size: 1.2rem; color: #fff; }
+        .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        .btn { padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: background 0.2s; }
+        .btn-copy { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; }
+        .btn-copy:hover { background: #3a3a3a; }
+        .btn-download { background: #4a9eff; color: #fff; }
+        .btn-download:hover { background: #3a8eef; }
+        .btn-url { background: #2a2a2a; color: #e0e0e0; border: 1px solid #444; }
+        .btn-url:hover { background: #3a3a3a; }
+        .btn-obsidian { background: #7c3aed; color: #fff; }
+        .btn-obsidian:hover { background: #6d28d9; }
+        .markdown-output { background: #1a1a1a; border: 1px solid #333; border-radius: 8px; padding: 1.5rem; white-space: pre-wrap; word-wrap: break-word; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.6; max-height: 600px; overflow-y: auto; color: #d4d4d4; }
+        .error { background: #2a1515; border: 1px solid #5a2020; color: #ff6b6b; padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; }
+        .error.active { display: block; }
+        .file-info { background: #1a2a1a; border: 1px solid #2a4a2a; color: #6bff6b; padding: 0.75rem 1rem; border-radius: 8px; margin-top: 1rem; font-size: 0.85rem; display: none; }
+        .file-info.active { display: block; }
+        footer { margin-top: 3rem; color: #555; font-size: 0.8rem; }
+        footer a { color: #4a9eff; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>&#128221; MarkItDown</h1>
-        <p class="subtitle">Sube un archivo y conviértelo a Markdown al instante</p>
+        <p class="subtitle">Convierte archivos, URLs o sitios completos a Markdown</p>
 
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">&#128194;</div>
-            <p>Arrastra un archivo aquí o haz clic para seleccionar</p>
-            <p class="hint">PDF, Word, PowerPoint, Excel, HTML, imágenes, audio, ZIP, EPUB y más (máx. 50 MB)</p>
+            <p>Arrastra un archivo aqu&iacute; o haz clic para seleccionar</p>
+            <p class="hint">PDF, Word, PowerPoint, Excel, HTML, im&aacute;genes, audio, ZIP, EPUB y m&aacute;s (m&aacute;x. 50 MB)</p>
         </div>
         <input type="file" id="fileInput">
+
+        <div class="url-section">
+            <p class="section-divider">&mdash; o convierte desde una URL &mdash;</p>
+            <div class="url-input-group">
+                <input type="url" id="urlInput" placeholder="https://ejemplo.com/articulo" class="url-input">
+                <button class="btn-url-convert" id="btnConvertUrl">&#127760; Convertir URL</button>
+            </div>
+        </div>
+
+        <div class="sitemap-section">
+            <h3>&#128506; Conversi&oacute;n masiva desde Sitemap</h3>
+            <p class="hint">Ingresa la URL de un sitemap.xml para convertir m&uacute;ltiples p&aacute;ginas de un sitio</p>
+            <div class="sitemap-input-group">
+                <input type="url" id="sitemapInput" placeholder="https://ejemplo.com/sitemap.xml" class="url-input">
+                <button class="btn-sitemap" id="btnConvertSitemap">&#9889; Convertir sitio</button>
+            </div>
+            <div class="sitemap-options">
+                <label>M&aacute;x. p&aacute;ginas: <input type="number" id="maxPages" value="20" min="1" max="100"></label>
+            </div>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+                <span class="progress-text" id="progressText">0 / 0</span>
+            </div>
+        </div>
 
         <div class="file-info" id="fileInfo"></div>
         <div class="error" id="errorBox"></div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <p>Convirtiendo archivo...</p>
+            <p>Convirtiendo...</p>
         </div>
 
         <div class="result" id="result">
@@ -261,6 +134,17 @@
             </div>
             <pre class="markdown-output" id="markdownOutput"></pre>
         </div>
+
+        <div class="bulk-results" id="bulkResults">
+            <div class="bulk-results-header">
+                <h2>&#128218; Resultados del sitemap</h2>
+                <div class="btn-group">
+                    <button class="btn btn-download" id="btnDownloadAll">&#128229; Descargar todo (.zip)</button>
+                    <button class="btn btn-obsidian" id="btnObsidianAll">&#127960; Todo a Obsidian</button>
+                </div>
+            </div>
+            <div id="bulkItemsList"></div>
+        </div>
     </div>
 
     <footer>
@@ -268,6 +152,7 @@
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.5.0/libs/lz-string.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
@@ -280,11 +165,23 @@
         const btnUrl = document.getElementById('btnUrl');
         const btnDownload = document.getElementById('btnDownload');
         const btnObsidian = document.getElementById('btnObsidian');
+        const urlInput = document.getElementById('urlInput');
+        const btnConvertUrl = document.getElementById('btnConvertUrl');
+        const sitemapInput = document.getElementById('sitemapInput');
+        const btnConvertSitemap = document.getElementById('btnConvertSitemap');
+        const maxPagesInput = document.getElementById('maxPages');
+        const progressBar = document.getElementById('progressBar');
+        const progressFill = document.getElementById('progressFill');
+        const progressText = document.getElementById('progressText');
+        const bulkResults = document.getElementById('bulkResults');
+        const bulkItemsList = document.getElementById('bulkItemsList');
+        const btnDownloadAll = document.getElementById('btnDownloadAll');
+        const btnObsidianAll = document.getElementById('btnObsidianAll');
 
         let currentFilename = '';
         let currentMarkdown = '';
+        let bulkData = [];
 
-        // Check if URL has shared content on page load
         window.addEventListener('DOMContentLoaded', () => {
             const hash = window.location.hash.slice(1);
             if (hash) {
@@ -298,146 +195,156 @@
                         fileInfo.textContent = 'Contenido cargado desde URL compartida';
                         fileInfo.classList.add('active');
                     }
-                } catch (e) {
-                    // Invalid hash, ignore
-                }
+                } catch (e) {}
             }
         });
 
-        // Click to upload
         uploadArea.addEventListener('click', () => fileInput.click());
-
-        // Drag & drop
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.classList.remove('dragover');
-            if (e.dataTransfer.files.length > 0) {
-                handleFile(e.dataTransfer.files[0]);
-            }
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                handleFile(fileInput.files[0]);
-            }
-        });
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => { uploadArea.classList.remove('dragover'); });
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', () => { if (fileInput.files.length > 0) handleFile(fileInput.files[0]); });
 
         async function handleFile(file) {
-            // Reset UI
-            errorBox.classList.remove('active');
-            result.classList.remove('active');
-            fileInfo.classList.remove('active');
-
-            // Show file info
+            resetUI();
             const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
             fileInfo.textContent = `Archivo: ${file.name} (${sizeMB} MB)`;
             fileInfo.classList.add('active');
-
-            // Show loading
             loading.classList.add('active');
-
             const formData = new FormData();
             formData.append('file', file);
-
             try {
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData,
-                });
-
+                const response = await fetch('/convert', { method: 'POST', body: formData });
                 const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.error || 'Error desconocido');
-                }
-
+                if (!response.ok) throw new Error(data.error || 'Error desconocido');
                 currentFilename = data.filename.replace(/\.[^.]+$/, '') + '.md';
                 currentMarkdown = data.markdown;
-
                 markdownOutput.textContent = currentMarkdown;
                 result.classList.add('active');
-            } catch (err) {
-                errorBox.textContent = err.message;
-                errorBox.classList.add('active');
-            } finally {
-                loading.classList.remove('active');
-            }
+            } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
+            finally { loading.classList.remove('active'); }
         }
 
-        // Copy button
-        btnCopy.addEventListener('click', () => {
-            navigator.clipboard.writeText(currentMarkdown).then(() => {
-                btnCopy.textContent = '¡Copiado!';
-                setTimeout(() => { btnCopy.textContent = '📋 Copiar'; }, 2000);
+        btnConvertUrl.addEventListener('click', () => convertFromUrl());
+        urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') convertFromUrl(); });
+
+        async function convertFromUrl() {
+            const url = urlInput.value.trim();
+            if (!url) return;
+            resetUI();
+            fileInfo.textContent = `URL: ${url}`;
+            fileInfo.classList.add('active');
+            loading.classList.add('active');
+            try {
+                const response = await fetch('/convert-url', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error desconocido');
+                currentFilename = data.filename.replace(/\.[^.]+$/, '') + '.md';
+                currentMarkdown = data.markdown;
+                markdownOutput.textContent = currentMarkdown;
+                result.classList.add('active');
+            } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
+            finally { loading.classList.remove('active'); }
+        }
+
+        btnConvertSitemap.addEventListener('click', () => convertSitemap());
+        sitemapInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') convertSitemap(); });
+
+        async function convertSitemap() {
+            const sitemapUrl = sitemapInput.value.trim();
+            if (!sitemapUrl) return;
+            const maxPages = parseInt(maxPagesInput.value) || 20;
+            resetUI();
+            fileInfo.textContent = `Sitemap: ${sitemapUrl} (max. ${maxPages} paginas)`;
+            fileInfo.classList.add('active');
+            progressBar.classList.add('active');
+            progressFill.style.width = '0%';
+            progressText.textContent = 'Descargando sitemap...';
+            try {
+                const response = await fetch('/convert-sitemap', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sitemap_url: sitemapUrl, max_pages: maxPages }) });
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.error || 'Error desconocido');
+                progressFill.style.width = '100%';
+                progressText.textContent = `${data.converted} de ${data.total_urls} convertidas`;
+                bulkData = data.results;
+                renderBulkResults(data);
+            } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
+            finally { setTimeout(() => progressBar.classList.remove('active'), 2000); }
+        }
+
+        function renderBulkResults(data) {
+            bulkItemsList.innerHTML = '';
+            if (data.results.length === 0) { bulkItemsList.innerHTML = '<p style="color:#888;">No se convirtio ninguna pagina.</p>'; bulkResults.classList.add('active'); return; }
+            data.results.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'bulk-item';
+                div.innerHTML = `<div class="bulk-item-header" onclick="toggleBulkItem(${index})"><span class="bulk-item-title">${item.url}</span><div class="bulk-item-actions"><button class="btn-sm btn-sm-download" onclick="event.stopPropagation(); downloadSingle(${index})">&#128229;</button><button class="btn-sm btn-sm-obsidian" onclick="event.stopPropagation(); obsidianSingle(${index})">&#127960;</button></div></div><div class="bulk-item-content" id="bulkContent${index}">${escapeHtml(item.markdown.substring(0, 500))}${item.markdown.length > 500 ? '\n...' : ''}</div>`;
+                bulkItemsList.appendChild(div);
             });
-        });
-
-        // Copy URL button - generates a shareable URL with compressed markdown in hash
-        btnUrl.addEventListener('click', () => {
-            const compressed = LZString.compressToEncodedURIComponent(currentMarkdown);
-            const shareUrl = window.location.origin + window.location.pathname + '#' + compressed;
-            
-            if (shareUrl.length > 50000) {
-                // URL too long, warn the user
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    btnUrl.textContent = '⚠️ URL larga, copiada';
-                    setTimeout(() => { btnUrl.textContent = '🔗 Copiar URL'; }, 3000);
-                });
-            } else {
-                navigator.clipboard.writeText(shareUrl).then(() => {
-                    btnUrl.textContent = '✅ URL copiada!';
-                    setTimeout(() => { btnUrl.textContent = '🔗 Copiar URL'; }, 2000);
-                });
+            if (data.errors.length > 0) {
+                const errDiv = document.createElement('div');
+                errDiv.style.cssText = 'margin-top:1rem;padding:0.75rem;background:#2a1515;border:1px solid #5a2020;border-radius:8px;font-size:0.8rem;color:#ff6b6b;';
+                errDiv.innerHTML = `<strong>${data.errors.length} URLs fallaron:</strong><br>` + data.errors.map(e => `- ${e.url}: ${e.error}`).join('<br>');
+                bulkItemsList.appendChild(errDiv);
             }
-        });
+            bulkResults.classList.add('active');
+        }
 
-        // Download button
-        btnDownload.addEventListener('click', () => {
-            const blob = new Blob([currentMarkdown], { type: 'text/markdown' });
+        function toggleBulkItem(index) { document.getElementById(`bulkContent${index}`).classList.toggle('active'); }
+
+        function downloadSingle(index) {
+            const item = bulkData[index];
+            const frontmatter = `---\nsource: ${item.url}\nconverted: ${new Date().toISOString().split('T')[0]}\ntags:\n  - converted\n  - sitemap\n---\n\n`;
+            const blob = new Blob([frontmatter + item.markdown], { type: 'text/markdown' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = currentFilename;
-            a.click();
+            const a = document.createElement('a'); a.href = url; a.download = item.filename; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function obsidianSingle(index) {
+            const item = bulkData[index];
+            const noteName = item.filename.replace('.md', '');
+            const frontmatter = `---\nsource: ${item.url}\nconverted: ${new Date().toISOString().split('T')[0]}\ntags:\n  - converted\n  - sitemap\n---\n\n`;
+            const content = frontmatter + item.markdown;
+            const uri = `obsidian://new?name=${encodeURIComponent(noteName)}&content=${encodeURIComponent(content)}`;
+            if (uri.length > 100000) { downloadSingle(index); } else { window.location.href = uri; }
+        }
+
+        btnDownloadAll.addEventListener('click', async () => {
+            const zip = new JSZip();
+            bulkData.forEach(item => {
+                const frontmatter = `---\nsource: ${item.url}\nconverted: ${new Date().toISOString().split('T')[0]}\ntags:\n  - converted\n  - sitemap\n---\n\n`;
+                zip.file(item.filename, frontmatter + item.markdown);
+            });
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'sitemap_converted.zip'; a.click();
             URL.revokeObjectURL(url);
         });
 
-        // Export to Obsidian button
+        btnObsidianAll.addEventListener('click', () => { bulkData.forEach((item, index) => { setTimeout(() => obsidianSingle(index), index * 500); }); });
+
+        btnCopy.addEventListener('click', () => { navigator.clipboard.writeText(currentMarkdown).then(() => { btnCopy.textContent = 'Copiado!'; setTimeout(() => { btnCopy.textContent = '📋 Copiar'; }, 2000); }); });
+
+        btnUrl.addEventListener('click', () => {
+            const compressed = LZString.compressToEncodedURIComponent(currentMarkdown);
+            const shareUrl = window.location.origin + window.location.pathname + '#' + compressed;
+            navigator.clipboard.writeText(shareUrl).then(() => { btnUrl.textContent = shareUrl.length > 50000 ? '⚠️ URL larga, copiada' : '✅ URL copiada!'; setTimeout(() => { btnUrl.textContent = '🔗 Copiar URL'; }, 2000); });
+        });
+
+        btnDownload.addEventListener('click', () => { const blob = new Blob([currentMarkdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = currentFilename; a.click(); URL.revokeObjectURL(url); });
+
         btnObsidian.addEventListener('click', () => {
             const noteName = currentFilename.replace(/\.[^.]+$/, '');
             const frontmatter = `---\nconverted: ${new Date().toISOString().split('T')[0]}\nsource: markitdown\ntags:\n  - converted\n---\n\n`;
             const fullContent = frontmatter + currentMarkdown;
-
-            // Try Obsidian URI protocol first
             const obsidianUri = `obsidian://new?name=${encodeURIComponent(noteName)}&content=${encodeURIComponent(fullContent)}`;
-            
-            // Check if URI is too long (browser limit ~2MB, but Obsidian handles ~100KB well)
-            if (obsidianUri.length > 100000) {
-                // Fallback: download as .md with frontmatter
-                const blob = new Blob([fullContent], { type: 'text/markdown' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = noteName + '.md';
-                a.click();
-                URL.revokeObjectURL(url);
-                btnObsidian.textContent = '📥 Descargado (mover a vault)';
-                setTimeout(() => { btnObsidian.textContent = '🏗 Exportar a Obsidian'; }, 3000);
-            } else {
-                window.location.href = obsidianUri;
-                btnObsidian.textContent = '✅ Enviado a Obsidian';
-                setTimeout(() => { btnObsidian.textContent = '🏗 Exportar a Obsidian'; }, 3000);
-            }
+            if (obsidianUri.length > 100000) { const blob = new Blob([fullContent], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = noteName + '.md'; a.click(); URL.revokeObjectURL(url); btnObsidian.textContent = '📥 Descargado'; } else { window.location.href = obsidianUri; btnObsidian.textContent = '✅ Enviado'; }
+            setTimeout(() => { btnObsidian.textContent = '🏗 Exportar a Obsidian'; }, 3000);
         });
+
+        function resetUI() { errorBox.classList.remove('active'); result.classList.remove('active'); fileInfo.classList.remove('active'); bulkResults.classList.remove('active'); loading.classList.remove('active'); }
+        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
     </script>
 </body>
 </html>
