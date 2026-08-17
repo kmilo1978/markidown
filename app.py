@@ -565,8 +565,8 @@ def compression_bulk_check():
 
 @app.route("/compress", methods=["POST"])
 def compress_content():
-    """Compress markdown content using basic Headroom-style compression.
-    Removes redundant URLs, deduplicates repeated patterns, and strips noise."""
+    """Compress markdown content for AI agent consumption.
+    Removes noise, deduplicates, shortens URLs, strips non-essential formatting."""
     data = request.get_json()
     if not data or "markdown" not in data:
         return jsonify({"error": "No se proporciono contenido markdown"}), 400
@@ -575,52 +575,81 @@ def compress_content():
     original_length = len(md_text)
     original_tokens = original_length // 4
 
-    # --- Compression strategies ---
     compressed = md_text
 
-    # 1. Deduplicate repeated URLs (keep first, replace rest with [ref:N])
-    import re as compress_re
-    url_pattern = r'https?://[^\s\)\]\"\'<>]+'
-    found_urls = compress_re.findall(url_pattern, compressed)
-    url_counts = {}
-    for u in found_urls:
-        url_counts[u] = url_counts.get(u, 0) + 1
+    # 1. Remove frontmatter (agent doesn't need it for understanding)
+    if compressed.startswith("---"):
+        end = compressed.find("---", 3)
+        if end != -1:
+            compressed = compressed[end + 3:].strip()
 
-    url_refs = {}
-    ref_index = 1
-    for url, count in url_counts.items():
-        if count > 1 and len(url) > 40:
-            url_refs[url] = f"[ref:{ref_index}]"
-            ref_index += 1
+    # 2. Remove all image markdown (images can't be processed as text by agents)
+    compressed = re.sub(r'!\[.*?\]\(.*?\)', '', compressed)
 
-    # Build reference table
-    ref_table = ""
-    if url_refs:
-        ref_table = "\n\n<!-- URL References -->\n"
-        for url, ref in url_refs.items():
-            ref_table += f"<!-- {ref} = {url} -->\n"
-            # Replace all occurrences after the first
-            first_pos = compressed.find(url)
-            if first_pos >= 0:
-                compressed = compressed[:first_pos + len(url)] + compressed[first_pos + len(url):].replace(url, ref)
+    # 3. Simplify links: [text](url) → text (url domain only for context)
+    def simplify_link(match):
+        text = match.group(1).strip()
+        url = match.group(2).strip()
+        if not text:
+            return ''
+        try:
+            domain = urlparse(url).netloc
+            if domain and text.lower() != domain.lower():
+                return f"{text} ({domain})"
+        except:
+            pass
+        return text
 
-    # 2. Remove redundant whitespace and blank lines
-    compressed = compress_re.sub(r'\n{3,}', '\n\n', compressed)
+    compressed = re.sub(r'\[([^\]]*)\]\(([^\)]+)\)', simplify_link, compressed)
 
-    # 3. Remove tracking parameters from URLs
-    compressed = compress_re.sub(r'[?&](utm_\w+|fbclid|gclid|ref|source|medium|campaign)=[^&\s\)\]]*', '', compressed)
+    # 4. Remove standalone URLs (not in links) — keep only domain
+    def shorten_standalone_url(match):
+        url = match.group(0)
+        try:
+            parsed = urlparse(url)
+            path = parsed.path.strip('/')
+            if path:
+                return f"{parsed.netloc}/{path.split('/')[0]}..."
+            return parsed.netloc
+        except:
+            return url
 
-    # 4. Collapse repeated markdown image badges (common in Product Hunt, shields.io)
-    compressed = compress_re.sub(r'(\[!\[.*?\]\(.*?\)\]\(.*?\))\s*(?=\[!\[)', r'\1 ', compressed)
+    compressed = re.sub(r'https?://[^\s\)\]\"\'<>,]+', shorten_standalone_url, compressed)
 
-    # 5. Remove empty markdown links
-    compressed = compress_re.sub(r'\[]\(.*?\)', '', compressed)
+    # 5. Remove HTML comments
+    compressed = re.sub(r'<!--.*?-->', '', compressed, flags=re.DOTALL)
 
-    # 6. Strip excessive badge/shield patterns
-    compressed = compress_re.sub(r'!\[.*?\]\(https://img\.shields\.io/.*?\)', '[badge]', compressed)
+    # 6. Remove tracking/query parameters from remaining URLs
+    compressed = re.sub(r'[?&](utm_\w+|fbclid|gclid|ref|source|medium|campaign|theme|embed|post_id|period|t)=[^&\s\)\]]*', '', compressed)
 
-    # Add reference table at end
-    compressed = compressed + ref_table
+    # 7. Collapse multiple blank lines
+    compressed = re.sub(r'\n{3,}', '\n\n', compressed)
+
+    # 8. Remove lines that are just whitespace
+    compressed = re.sub(r'^\s+$', '', compressed, flags=re.MULTILINE)
+
+    # 9. Remove repeated separator patterns (----, ====, ****)
+    compressed = re.sub(r'^[-=*]{3,}\s*$', '', compressed, flags=re.MULTILINE)
+
+    # 10. Remove empty headers
+    compressed = re.sub(r'^#+\s*$', '', compressed, flags=re.MULTILINE)
+
+    # 11. Collapse repeated whitespace within lines
+    compressed = re.sub(r'[ \t]{2,}', ' ', compressed)
+
+    # 12. Remove badge/shield image patterns
+    compressed = re.sub(r'\[badge\]', '', compressed)
+
+    # 13. Remove empty parentheses and brackets
+    compressed = re.sub(r'\(\s*\)', '', compressed)
+    compressed = re.sub(r'\[\s*\]', '', compressed)
+
+    # 14. Remove lines with only punctuation or single characters
+    compressed = re.sub(r'^[^\w\s]{1,3}$', '', compressed, flags=re.MULTILINE)
+
+    # 15. Final cleanup of multiple blank lines
+    compressed = re.sub(r'\n{3,}', '\n\n', compressed)
+    compressed = compressed.strip()
 
     compressed_length = len(compressed)
     compressed_tokens = compressed_length // 4
