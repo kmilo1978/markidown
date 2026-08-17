@@ -3,6 +3,7 @@ import re
 import io
 import tempfile
 import zipfile
+import json
 import xml.etree.ElementTree as ET
 import requests as http_requests
 from flask import Flask, render_template, request, jsonify, send_file
@@ -103,6 +104,56 @@ def normalize_content(text, level="basic"):
     # Remove excessive blank lines
     text = re.sub(r'\n{4,}', '\n\n\n', text)
     return text.strip()
+
+
+def should_compress(content, source_type="single"):
+    """Determine if content should be compressed before sending to an agent.
+    Returns recommendation dict with compress boolean, reason, and estimated savings."""
+    content_length = len(content)
+    token_estimate = content_length // 4  # rough estimate: 1 token ~ 4 chars
+    
+    # Thresholds
+    SINGLE_THRESHOLD = 8000  # ~2000 tokens
+    BULK_THRESHOLD = 3000    # Lower threshold per page in bulk mode
+    
+    recommendation = {
+        "compress": False,
+        "reason": "",
+        "token_estimate": token_estimate,
+        "estimated_savings": "0%",
+        "content_type": "prose",
+        "compressor": "kompress-v2-base",
+    }
+    
+    # Detect content type for compressor routing
+    if content.count("{") > 10 or content.count("[") > 10:
+        recommendation["content_type"] = "structured_data"
+        recommendation["compressor"] = "SmartCrusher"
+        recommendation["estimated_savings"] = "60-95%"
+    elif content.count("def ") > 3 or content.count("function ") > 3 or content.count("class ") > 3:
+        recommendation["content_type"] = "code"
+        recommendation["compressor"] = "CodeCompressor"
+        recommendation["estimated_savings"] = "15-20%"
+    else:
+        recommendation["content_type"] = "prose"
+        recommendation["compressor"] = "Kompress-v2-base"
+        recommendation["estimated_savings"] = "30-50%"
+    
+    # Decision logic
+    if source_type == "bulk":
+        if content_length > BULK_THRESHOLD:
+            recommendation["compress"] = True
+            recommendation["reason"] = f"Bulk mode: {token_estimate} tokens estimados. Comprimir ahorra contexto para procesar multiples paginas."
+        else:
+            recommendation["reason"] = f"Contenido corto ({token_estimate} tokens). Compresion no necesaria."
+    elif source_type == "single":
+        if content_length > SINGLE_THRESHOLD:
+            recommendation["compress"] = True
+            recommendation["reason"] = f"Documento largo ({token_estimate} tokens). Recomendado comprimir antes de enviar al agente."
+        else:
+            recommendation["reason"] = f"Documento manejable ({token_estimate} tokens). Compresion opcional."
+    
+    return recommendation
 
 
 def apply_preset(markdown_content, preset_name, source_url=None, filename=None):
@@ -461,6 +512,55 @@ def export_markdown():
             return jsonify({"error": f"Error generando PDF: {str(e)}"}), 500
 
     return jsonify({"error": f"Formato no soportado: {export_format}"}), 400
+
+
+@app.route("/compression-check", methods=["POST"])
+def compression_check():
+    """Check if content should be compressed before sending to an agent."""
+    data = request.get_json()
+    if not data or "markdown" not in data:
+        return jsonify({"error": "No se proporciono contenido markdown"}), 400
+    
+    markdown = data["markdown"]
+    source_type = data.get("source_type", "single")
+    
+    recommendation = should_compress(markdown, source_type)
+    return jsonify(recommendation)
+
+
+@app.route("/compression-bulk-check", methods=["POST"])
+def compression_bulk_check():
+    """Check compression recommendations for bulk sitemap results."""
+    data = request.get_json()
+    if not data or "results" not in data:
+        return jsonify({"error": "No se proporcionaron resultados"}), 400
+    
+    results = data["results"]
+    total_tokens = 0
+    recommendations = []
+    
+    for item in results:
+        rec = should_compress(item.get("markdown", ""), source_type="bulk")
+        rec["url"] = item.get("url", "")
+        rec["filename"] = item.get("filename", "")
+        total_tokens += rec["token_estimate"]
+        recommendations.append(rec)
+    
+    compress_count = sum(1 for r in recommendations if r["compress"])
+    
+    summary = {
+        "total_pages": len(results),
+        "total_tokens_estimate": total_tokens,
+        "pages_to_compress": compress_count,
+        "overall_recommendation": "compress" if total_tokens > 10000 else "optional",
+        "reason": f"{total_tokens} tokens totales en {len(results)} paginas. "
+                  + ("Recomendado usar Headroom para reducir contexto antes de enviar al agente." if total_tokens > 10000
+                     else "Volumen manejable. Compresion opcional."),
+        "headroom_command": "headroom proxy --port 8787" if total_tokens > 10000 else None,
+        "per_page": recommendations,
+    }
+    
+    return jsonify(summary)
 
 
 if __name__ == "__main__":

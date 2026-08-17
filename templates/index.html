@@ -181,7 +181,7 @@
         <!-- Single result -->
         <div class="result" id="result">
             <div class="result-header">
-                <h2>Resultado</h2>
+                <h2>Resultado</h2><span id="compressionBadge" style="display:none;font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:12px;margin-left:0.5rem;"></span>
                 <div class="btn-group">
                     <button class="btn btn-copy" id="btnCopy">&#128203; Copiar</button>
                     <button class="btn btn-url" id="btnUrl">&#128279; Copiar URL</button>
@@ -203,7 +203,7 @@
         <!-- Bulk results -->
         <div class="bulk-results" id="bulkResults">
             <div class="bulk-results-header">
-                <h2>&#128218; Resultados del sitemap</h2>
+                <h2>&#128218; Resultados del sitemap</h2><span id="bulkCompressionBadge" style="display:none;font-size:0.75rem;padding:0.25rem 0.6rem;border-radius:12px;margin-left:0.5rem;"></span>
                 <div class="btn-group">
                     <button class="btn btn-download" id="btnDownloadAll">&#128229; Descargar todo (.zip)</button>
                     <button class="btn btn-obsidian" id="btnObsidianAll">&#127960; Todo a Obsidian</button>
@@ -321,6 +321,7 @@
                 currentMarkdown = data.markdown;
                 markdownOutput.textContent = currentMarkdown;
                 result.classList.add('active');
+                checkCompression(currentMarkdown, 'single');
             } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
             finally { loading.classList.remove('active'); }
         }
@@ -344,6 +345,7 @@
                 currentMarkdown = data.markdown;
                 markdownOutput.textContent = currentMarkdown;
                 result.classList.add('active');
+                checkCompression(currentMarkdown, 'single');
             } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
             finally { loading.classList.remove('active'); }
         }
@@ -370,6 +372,7 @@
                 progressText.textContent = `${data.converted} de ${data.total_urls} convertidas`;
                 bulkData = data.results;
                 renderBulkResults(data);
+                checkBulkCompression(data.results);
             } catch (err) { errorBox.textContent = err.message; errorBox.classList.add('active'); }
             finally { setTimeout(() => progressBar.classList.remove('active'), 2000); }
         }
@@ -436,6 +439,61 @@
             if (obsidianUri.length > 100000) { const blob = new Blob([currentMarkdown], { type: 'text/markdown' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = noteName + '.md'; a.click(); URL.revokeObjectURL(url); btnObsidian.textContent = '📥 Descargado'; } else { window.location.href = obsidianUri; btnObsidian.textContent = '✅ Enviado'; }
             setTimeout(() => { btnObsidian.textContent = '🏗 Obsidian'; }, 3000);
         });
+
+        // Compression check
+        async function checkCompression(markdown, sourceType) {
+            try {
+                const response = await fetch('/compression-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ markdown, source_type: sourceType })
+                });
+                const data = await response.json();
+                const badge = document.getElementById('compressionBadge');
+                if (data.compress) {
+                    badge.style.display = 'inline';
+                    badge.style.background = '#1a2a1a';
+                    badge.style.color = '#6bff6b';
+                    badge.style.border = '1px solid #2a4a2a';
+                    badge.textContent = `⚡ Headroom: ${data.estimated_savings} ahorro | ${data.compressor}`;
+                    badge.title = data.reason;
+                } else {
+                    badge.style.display = 'inline';
+                    badge.style.background = '#1a1a2a';
+                    badge.style.color = '#a0a0ff';
+                    badge.style.border = '1px solid #2a2a4a';
+                    badge.textContent = `✓ ${data.token_estimate} tokens - sin compresion`;
+                    badge.title = data.reason;
+                }
+            } catch (e) {}
+        }
+
+        async function checkBulkCompression(results) {
+            try {
+                const response = await fetch('/compression-bulk-check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ results })
+                });
+                const data = await response.json();
+                const badge = document.getElementById('bulkCompressionBadge');
+                if (data.overall_recommendation === 'compress') {
+                    badge.style.display = 'inline';
+                    badge.style.background = '#1a2a1a';
+                    badge.style.color = '#6bff6b';
+                    badge.style.border = '1px solid #2a4a2a';
+                    badge.textContent = `⚡ Headroom recomendado: ${data.total_tokens_estimate} tokens en ${data.total_pages} paginas`;
+                    badge.title = data.reason + ' Comando: ' + (data.headroom_command || '');
+                } else {
+                    badge.style.display = 'inline';
+                    badge.style.background = '#1a1a2a';
+                    badge.style.color = '#a0a0ff';
+                    badge.style.border = '1px solid #2a2a4a';
+                    badge.textContent = `✓ ${data.total_tokens_estimate} tokens - volumen manejable`;
+                    badge.title = data.reason;
+                }
+            } catch (e) {}
+        }
 
         function resetUI() { errorBox.classList.remove('active'); result.classList.remove('active'); fileInfo.classList.remove('active'); bulkResults.classList.remove('active'); loading.classList.remove('active'); }
         function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
