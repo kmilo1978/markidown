@@ -563,5 +563,76 @@ def compression_bulk_check():
     return jsonify(summary)
 
 
+@app.route("/compress", methods=["POST"])
+def compress_content():
+    """Compress markdown content using basic Headroom-style compression.
+    Removes redundant URLs, deduplicates repeated patterns, and strips noise."""
+    data = request.get_json()
+    if not data or "markdown" not in data:
+        return jsonify({"error": "No se proporciono contenido markdown"}), 400
+
+    md_text = data["markdown"]
+    original_length = len(md_text)
+    original_tokens = original_length // 4
+
+    # --- Compression strategies ---
+    compressed = md_text
+
+    # 1. Deduplicate repeated URLs (keep first, replace rest with [ref:N])
+    import re as compress_re
+    url_pattern = r'https?://[^\s\)\]\"\'<>]+'
+    found_urls = compress_re.findall(url_pattern, compressed)
+    url_counts = {}
+    for u in found_urls:
+        url_counts[u] = url_counts.get(u, 0) + 1
+
+    url_refs = {}
+    ref_index = 1
+    for url, count in url_counts.items():
+        if count > 1 and len(url) > 40:
+            url_refs[url] = f"[ref:{ref_index}]"
+            ref_index += 1
+
+    # Build reference table
+    ref_table = ""
+    if url_refs:
+        ref_table = "\n\n<!-- URL References -->\n"
+        for url, ref in url_refs.items():
+            ref_table += f"<!-- {ref} = {url} -->\n"
+            # Replace all occurrences after the first
+            first_pos = compressed.find(url)
+            if first_pos >= 0:
+                compressed = compressed[:first_pos + len(url)] + compressed[first_pos + len(url):].replace(url, ref)
+
+    # 2. Remove redundant whitespace and blank lines
+    compressed = compress_re.sub(r'\n{3,}', '\n\n', compressed)
+
+    # 3. Remove tracking parameters from URLs
+    compressed = compress_re.sub(r'[?&](utm_\w+|fbclid|gclid|ref|source|medium|campaign)=[^&\s\)\]]*', '', compressed)
+
+    # 4. Collapse repeated markdown image badges (common in Product Hunt, shields.io)
+    compressed = compress_re.sub(r'(\[!\[.*?\]\(.*?\)\]\(.*?\))\s*(?=\[!\[)', r'\1 ', compressed)
+
+    # 5. Remove empty markdown links
+    compressed = compress_re.sub(r'\[]\(.*?\)', '', compressed)
+
+    # 6. Strip excessive badge/shield patterns
+    compressed = compress_re.sub(r'!\[.*?\]\(https://img\.shields\.io/.*?\)', '[badge]', compressed)
+
+    # Add reference table at end
+    compressed = compressed + ref_table
+
+    compressed_length = len(compressed)
+    compressed_tokens = compressed_length // 4
+    savings_pct = round((1 - compressed_length / max(original_length, 1)) * 100, 1)
+
+    return jsonify({
+        "original_tokens": original_tokens,
+        "compressed_tokens": compressed_tokens,
+        "savings_percent": savings_pct,
+        "compressed_markdown": compressed,
+    })
+
+
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

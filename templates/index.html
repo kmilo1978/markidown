@@ -440,7 +440,7 @@
             setTimeout(() => { btnObsidian.textContent = '🏗 Obsidian'; }, 3000);
         });
 
-        // Compression check
+        // Compression functions
         async function checkCompression(markdown, sourceType) {
             try {
                 const response = await fetch('/compression-check', {
@@ -455,17 +455,46 @@
                     badge.style.background = '#1a2a1a';
                     badge.style.color = '#6bff6b';
                     badge.style.border = '1px solid #2a4a2a';
-                    badge.textContent = `⚡ Headroom: ${data.estimated_savings} ahorro | ${data.compressor}`;
-                    badge.title = data.reason;
+                    badge.style.cursor = 'pointer';
+                    badge.textContent = `⚡ Comprimir (${data.estimated_savings} ahorro)`;
+                    badge.title = 'Click para comprimir y copiar version optimizada para agentes';
+                    badge.onclick = () => compressAndCopy();
                 } else {
                     badge.style.display = 'inline';
                     badge.style.background = '#1a1a2a';
                     badge.style.color = '#a0a0ff';
                     badge.style.border = '1px solid #2a2a4a';
-                    badge.textContent = `✓ ${data.token_estimate} tokens - sin compresion`;
+                    badge.style.cursor = 'default';
+                    badge.textContent = `✓ ${data.token_estimate} tokens`;
                     badge.title = data.reason;
+                    badge.onclick = null;
                 }
             } catch (e) {}
+        }
+
+        async function compressAndCopy() {
+            const badge = document.getElementById('compressionBadge');
+            badge.textContent = '⏳ Comprimiendo...';
+            try {
+                const response = await fetch('/compress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ markdown: currentMarkdown })
+                });
+                const data = await response.json();
+                if (data.compressed_markdown) {
+                    await navigator.clipboard.writeText(data.compressed_markdown);
+                    badge.textContent = `✅ Copiado! ${data.original_tokens}→${data.compressed_tokens} tokens (-${data.savings_percent}%)`;
+                    badge.style.background = '#1a3a1a';
+                    setTimeout(() => {
+                        badge.textContent = `⚡ Comprimir de nuevo`;
+                        badge.style.background = '#1a2a1a';
+                    }, 4000);
+                }
+            } catch (e) {
+                badge.textContent = '❌ Error al comprimir';
+                setTimeout(() => { badge.textContent = '⚡ Reintentar'; }, 2000);
+            }
         }
 
         async function checkBulkCompression(results) {
@@ -482,17 +511,63 @@
                     badge.style.background = '#1a2a1a';
                     badge.style.color = '#6bff6b';
                     badge.style.border = '1px solid #2a4a2a';
-                    badge.textContent = `⚡ Headroom recomendado: ${data.total_tokens_estimate} tokens en ${data.total_pages} paginas`;
-                    badge.title = data.reason + ' Comando: ' + (data.headroom_command || '');
+                    badge.style.cursor = 'pointer';
+                    badge.textContent = `⚡ Comprimir todo (${data.total_tokens_estimate} tokens)`;
+                    badge.title = 'Click para comprimir y descargar ZIP optimizado para agentes';
+                    badge.onclick = () => compressBulkAndDownload();
                 } else {
                     badge.style.display = 'inline';
                     badge.style.background = '#1a1a2a';
                     badge.style.color = '#a0a0ff';
                     badge.style.border = '1px solid #2a2a4a';
-                    badge.textContent = `✓ ${data.total_tokens_estimate} tokens - volumen manejable`;
+                    badge.textContent = `✓ ${data.total_tokens_estimate} tokens - OK`;
                     badge.title = data.reason;
+                    badge.onclick = null;
                 }
             } catch (e) {}
+        }
+
+        async function compressBulkAndDownload() {
+            const badge = document.getElementById('bulkCompressionBadge');
+            badge.textContent = '⏳ Comprimiendo paginas...';
+            let totalOriginal = 0;
+            let totalCompressed = 0;
+            const compressedResults = [];
+
+            for (const item of bulkData) {
+                try {
+                    const response = await fetch('/compress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ markdown: item.markdown })
+                    });
+                    const data = await response.json();
+                    totalOriginal += data.original_tokens;
+                    totalCompressed += data.compressed_tokens;
+                    compressedResults.push({ filename: item.filename, markdown: data.compressed_markdown });
+                } catch (e) {
+                    compressedResults.push({ filename: item.filename, markdown: item.markdown });
+                }
+            }
+
+            // Download as ZIP
+            const zip = new JSZip();
+            compressedResults.forEach(item => { zip.file(item.filename, item.markdown); });
+            const blob = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'sitemap_compressed.zip';
+            a.click();
+            URL.revokeObjectURL(url);
+
+            const savings = Math.round((1 - totalCompressed / Math.max(totalOriginal, 1)) * 100);
+            badge.textContent = `✅ ZIP descargado! ${totalOriginal}→${totalCompressed} tokens (-${savings}%)`;
+            badge.style.background = '#1a3a1a';
+            setTimeout(() => {
+                badge.textContent = `⚡ Comprimir de nuevo`;
+                badge.style.background = '#1a2a1a';
+            }, 5000);
         }
 
         function resetUI() { errorBox.classList.remove('active'); result.classList.remove('active'); fileInfo.classList.remove('active'); bulkResults.classList.remove('active'); loading.classList.remove('active'); }
